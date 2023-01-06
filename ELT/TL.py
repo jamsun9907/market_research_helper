@@ -1,27 +1,30 @@
 # MongoDB에 적재된 데이터를 RDB에 정제하여 적재하는 파일
 
+import pandas as pd
 import psycopg2
+from psycopg2 import extras
 import config
+from pipeline import get_mongo_collection
+
 
 def get_mongo_data():
     """
     MongoDB에서 데이터를 불러오는 함수
-    :return: MongoDB에서 얻은 rows
+    :return: MongoDB에서 얻은 rows의 dataframe
     """
-    pass
+    collection = get_mongo_collection()
+    print('Fetching data from MongoDB...')
 
+    # CMongoDB에서 데이터를 불러와 데이터 프레임으로 변환
+    cursor = collection.find()
+    list_cur = list(cursor)
+    df = pd.DataFrame(list_cur)
 
-def transpose_data(rows):
-    """
-    row를 판다스 데이터프레임으로 만든 뒤
-    row를 1시간 단위로 집계한다.
-    그 외 필요한 정제작업이 있으면 그것도 함
-    - 중복제거
-    :param row:
-    :return: Dataframe
-    """
-    pass
+    # 중복 및 필요 없는 컬럼 제거
+    df.drop(['_id', 'REG_DTTM'], axis=1, inplace=True)
+    df.drop_duplicates(inplace=True)
 
+    return df
 
 # PostgreSQL
 def get_connection():
@@ -40,46 +43,53 @@ def get_connection():
     return connection
 
 
-def load_on_sql(row, connection):
+def load_on_sql(df):
     """
     raw 데이터를 PostgreSQL에 적재한다.
     Dataframe 형태를
     :return:
     None
     """
+    connection = get_connection()
     cur = connection.cursor()
-    columns = 'MODEL_NM, SERIAL_NO, SENSING_TIME, REGION, AUTONOMOUS_DISTRICT, ADMINISTRATIVE_DISTRICT, VISITOR_COUNT, REG_DTTM'
-    query = f'INSERT INTO population({columns}) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)'
+
+    columns = ','.join(df.columns)
+
+    # table creation
+    cur.execute("""CREATE TABLE IF NOT EXISTS population_Seoul(
+                    Id SERIAL PRIMARY key,
+                    MODEL_NM VARCHAR(255) NOT null,
+                    SERIAL_NO VARCHAR(255) NOT null,
+                    SENSING_TIME TIMESTAMP NOT null,
+                    REGION VARCHAR(255) NOT null,
+                    AUTONOMOUS_DISTRICT VARCHAR(255),
+                    VISITOR_COUNT INTEGER);""")
+
+    # insert query
+    query = f'INSERT INTO population({columns}) VALUES(%s,%s,%s,%s,%s,%s,%s)'
 
     # INSERT DATA
     try:
         # df를 insert
-        cur.execute(query, tuple(row.values()))
+        print(f'trying to load rows...')
+        extras.execute_batch(cur=cur, sql=query, argslist=tuple(df.values))
+
+        cur.close()
+        connection.commit()
+        print('completed', end=' ')
+
     except (Exception, psycopg2.Error) as e:
         raise
 
     finally:
+        connection.close()
         print("done!!")
-
-    return None
-
 
 
 # test
 
-rows = get_data(page=3)
+if __name__ == '__main__':
+    df = get_mongo_data()
+    load_on_sql(df)
 
-connection = get_connection()
-cur = connection.cursor()
 
-# INSERT DATA
-for row in rows:
-    try:
-        row['SENSING_TIME'] = row['SENSING_TIME'].replace('_', ' ')
-        load_data(row, connection)
-        print(f'{len(rows)} records loaded ')
-    except:
-        print("pass inserting a data that has incorrect datatype")
-
-    finally:
-        connection.commit()

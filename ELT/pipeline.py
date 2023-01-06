@@ -43,11 +43,7 @@ def get_data(page):
         print(f'Request Error : {status}')  # 예외처리 추가
 
 # MongoDB
-def load_on_mongoDB(rows):
-    """
-    rows를 mongoDB에 일단 저장
-    1000개를 배치 단위로 저장
-    """
+def get_mongo_collection():
     HOST = config.HOST
     USER = config.USER
     PASSWORD = config.PASSWORD
@@ -57,9 +53,18 @@ def load_on_mongoDB(rows):
 
     # 커넥션 접속 작업
     client = MongoClient(MONGO_URI)
-    db = client[DATABASE_NAME] # Connection
-    collection = db[COLLECTION_NAME] # Creating table
+    db = client[DATABASE_NAME]  # Connection
+    collection = db[COLLECTION_NAME]  # Creating table
 
+    return collection
+
+
+def load_on_mongoDB(rows):
+    """
+    rows를 mongoDB에 일단 저장
+    1000개를 배치 단위로 저장
+    """
+    collection = get_mongo_collection()
     collection.insert_many(documents=rows)
 
     return None
