@@ -6,7 +6,9 @@ import time
 import config
 
 
-# Extract
+# Extract  # 최신화를 알아서 update 하는 api
+# task : DB에 중복이 있는지 대조하여 없는 값만 업데이트를 하는 방식을 구현한다.
+# 어느 날짜까지 했다는걸 표시 : 1. DB에 table을 추가하여 2. text파일에 로그를 남긴다.
 def get_data(page):
     """
     API로부터 서울시 유동인구 데이터 row를 불러온다.
@@ -73,7 +75,7 @@ def load_on_mongoDB(rows):
 if __name__ == '__main__':
     start = time.time()
 
-    for page in range(94,200):
+    for page in range(1,94):
         # Api에서 데이터를 호출
         print(f'--------------------\nProcessing {page} page...')
 

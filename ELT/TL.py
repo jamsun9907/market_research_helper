@@ -4,7 +4,7 @@ import pandas as pd
 import psycopg2
 from psycopg2 import extras
 import config
-from pipeline import get_mongo_collection
+from pipeline_numeric import get_mongo_collection
 
 
 def get_mongo_data():
@@ -20,9 +20,25 @@ def get_mongo_data():
     list_cur = list(cursor)
     df = pd.DataFrame(list_cur)
 
+    return df
+
+
+def data_transform(df):
     # 중복 및 필요 없는 컬럼 제거
-    df.drop(['_id', 'REG_DTTM'], axis=1, inplace=True)
+    """
+    - ID 컬럼 : MongoDB에서 임의로 생겨난 데이터. PostgreSQL에서 id값 생성하므로 Drop
+    - MODEL_NM : 모든 데이터가 같은 모델명. 의미 없으므로 drop
+    - REG_DITM : 데이터가 서울시 DB에 등록된 시각. 그쪽 로그이므로 drop
+    """
+    print('Transforming data...')
+    df.drop(['_id', 'MODEL_NM', 'REG_DTTM'], axis=1, inplace=True)
     df.drop_duplicates(inplace=True)
+
+    # 이상한 측정값(서울대공원) 제거
+    df.drop(df[df['AUTONOMOUS_DISTRICT'] == 'Seoul_Grand_Park'].index, inplace=True)
+
+    # 영어 동 이름 정제
+    df['ADMINISTRATIVE_DISTRICT'] = df['ADMINISTRATIVE_DISTRICT'].str.replace(r'\d-', '-').str.replace(r'dong\d', 'dong')
 
     return df
 
@@ -56,40 +72,55 @@ def load_on_sql(df):
     columns = ','.join(df.columns)
 
     # table creation
-    cur.execute("""CREATE TABLE IF NOT EXISTS population_Seoul(
-                    Id SERIAL PRIMARY key,
-                    MODEL_NM VARCHAR(255) NOT null,
-                    SERIAL_NO VARCHAR(255) NOT null,
+    cur.execute("""CREATE TABLE IF NOT EXISTS population(
                     SENSING_TIME TIMESTAMP NOT null,
-                    REGION VARCHAR(255) NOT null,
+                    SERIAL_NO VARCHAR(255) NOT null,
                     AUTONOMOUS_DISTRICT VARCHAR(255),
-                    VISITOR_COUNT INTEGER);""")
+                    ADMINISTRATIVE_DISTRICT VARCHAR(255),
+                    REGION VARCHAR(255),
+                    VISITOR_COUNT INTEGER NOT NULL,
+                    PRIMARY KEY (SERIAL_NO, SENSING_TIME)
+                    );""")
 
     # insert query
-    query = f'INSERT INTO population({columns}) VALUES(%s,%s,%s,%s,%s,%s,%s)'
+    query = f'INSERT INTO population({columns}) VALUES(%s,%s,%s,%s,%s,%s)'
 
     # INSERT DATA
     try:
         # df를 insert
-        print(f'trying to load rows...')
+        print(f'Trying to load rows...')
         extras.execute_batch(cur=cur, sql=query, argslist=tuple(df.values))
 
         cur.close()
         connection.commit()
-        print('completed', end=' ')
+        print('Completed')
 
     except (Exception, psycopg2.Error) as e:
         raise
 
     finally:
         connection.close()
-        print("done!!")
+        print("Done!!")
 
+
+def update_sql():
+    """
+    MongoDB에서 축적된 데이터를 1시간에 한 번 씩 업데이트 한다.
+    파이썬 파일로 로그를 추가하여 그 이후 데이터에 대해서만 SQL에 적재한다.
+    :return:
+    """
+    pass
 
 # test
 
 if __name__ == '__main__':
+    # Extract
     df = get_mongo_data()
+
+    # Transform
+    df = data_transform(df)
+
+    # Load
     load_on_sql(df)
 
 
