@@ -1,4 +1,5 @@
 # 설계 : 하루에 한 번 이 api에서 전일 유동인구 정보를 자동으로 가져와 DB에 적재하도록 한다.
+# 이 파일은 API에서 원본 데이터를 추출하여 MongoDB에 적재까지만 한다.
 import requests
 import json
 from pymongo import MongoClient

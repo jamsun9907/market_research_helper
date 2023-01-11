@@ -19,6 +19,7 @@ numpy==1.24.1
 packaging==23.0
 pandas==1.5.2
 pip==22.3.1
+plotly==5.11.0
 psycopg2-binary==2.9.5
 pycparser==2.21
 pymongo==4.3.3
@@ -29,6 +30,7 @@ pytz==2022.7
 requests==2.28.1
 setuptools==65.6.3
 six==1.16.0
+tenacity==8.1.0
 urllib3==1.26.13
 Werkzeug==2.2.2
 wheel==0.37.1

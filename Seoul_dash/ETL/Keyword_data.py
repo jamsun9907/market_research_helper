@@ -1,10 +1,13 @@
 import requests
 import json
 import re
-import config as c
+import Seoul_dash.ETL.config as c
 import time
 from konlpy.tag import Okt
 from collections import Counter
+import plotly
+import plotly.express as px
+import pandas as pd
 
 
 # 데이터 베이스를 안쓰고 결과를 반환, flask에 보여줄 것이므로 구조적 프로그래밍을 진행
@@ -69,18 +72,40 @@ class KeywordSearcher:
         """
         # timer
         time_start = time.time()
+
         # 전처리
         sequences_preprocessed = ''.join([self._preprocessing(sent) for sent in sequences])
-        print(sequences_preprocessed)
+        # print(sequences_preprocessed)
 
         # 토큰화 : 시간이 남으면 pos stemming한 것 시간 비교해보기
         okt = Okt()
         keywords = okt.nouns(sequences_preprocessed)
-        count = Counter(keywords)
 
-        print(f'{len(sequences_preprocessed)}개의 시퀀스 토큰화 소요시간 : ', (time.time()- time_start))
+        # 카운트 : 각각의 토큰의 개수를 센다.
+        token_count = Counter(keywords)
+        print(f'{len(sequences_preprocessed)}개의 시퀀스 토큰화 소요시간 : ', (time.time() - time_start))
 
-        return count
+        return token_count
+
+    def get_graph(self, token_count):
+        """
+        keyword 그래프를 반환한다.
+        :return: json graph
+        """
+        # UPDATE : 토큰 중 가장 언급이 많이 된 키워드 30개만 가져온다. : 이거 plotly에서 조정 가능하게 변경한다.
+        # 카운터로 데이터 프래임 만들기
+        df = pd.DataFrame.from_dict(token_count, orient='index').reset_index()
+        df.rename(columns={'index': '키워드', 0: '횟수'}, inplace=True)
+
+        # 상위 20개 데이터만 가져오기
+        num_lookup = 20
+        df = df.sort_values(by='횟수' ,ascending=False).head(num_lookup)
+
+        # 그래프를 그린다
+        fig = px.bar(df, x='키워드', y='횟수', text='횟수')  # text : 상단에 표시할 때 어떤 축 할지
+        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        return graphJSON
+
 
 # Test
 if __name__ == '__main__':
@@ -88,8 +113,9 @@ if __name__ == '__main__':
     key = KeywordSearcher(keyword)
     title, description = key.parsing_json()
 
-    test1 = key.get_tags(description)
-    print('Description\n', test1)
+    token_count_desciption = key.get_tags(description)
 
-    test2 = key.get_tags(title)
-    print('Title\n', test2)
+    token_count_title = key.get_tags(title)
+
+    graph = key.get_graph(token_count_desciption)
+

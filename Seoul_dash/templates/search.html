@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block content %}
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Search Keywords</h1>
+  </div>
+
+ <form class="d-flex" role="search" action="/search" method="post">
+    <input class="form-control me-2" type="text" name="user_input" placeholder="Ex. 홍대 맛집" aria-label="Search">
+    <button class="btn btn-outline-success" type="submit">Search</button>
+ </form>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+{% endblock %}

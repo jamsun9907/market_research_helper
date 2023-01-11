@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block content %}
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Search Results</h1>
+  </div>
+
+  <!--  plotly char 위치  -->
+  <h5>{{Keyword}}에 대한 제목 키워드</h5>
+  <div id='chart_title' class='chart'”></div>
+
+  <h5>{{Keyword}}에 대한 본문 키워드</h5>
+  <div id='chart_description' class='chart'”></div>
+
+  <h6>출처 : 네이버 블로그 API</h6>
+  <br>
+  <br>
+
+<!--plotly 자바스크립트-->
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+<script type='text/javascript'>
+  var graphs = {{graph_description | safe}};
+  Plotly.plot('chart_description',graphs,{});
+</script>
+
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+<script type='text/javascript'>
+  var graphs = {{graph_title | safe}};
+  Plotly.plot('chart_title',graphs,{});
+</script>
+
+{% endblock %}
