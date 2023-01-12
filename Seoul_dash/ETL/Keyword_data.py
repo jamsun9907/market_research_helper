@@ -1,3 +1,5 @@
+# 데이터 베이스를 안쓰고 결과를 반환, flask에 보여줄 것이므로 구조적 프로그래밍을 진행
+
 import requests
 import json
 import re
@@ -8,9 +10,6 @@ from collections import Counter
 import plotly
 import plotly.express as px
 import pandas as pd
-
-
-# 데이터 베이스를 안쓰고 결과를 반환, flask에 보여줄 것이므로 구조적 프로그래밍을 진행
 
 
 class KeywordSearcher:

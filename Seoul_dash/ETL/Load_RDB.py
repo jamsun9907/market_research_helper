@@ -4,7 +4,7 @@ import pandas as pd
 import psycopg2
 from psycopg2 import extras
 import config
-from pipeline_numeric import get_mongo_collection
+from Pipeline_numeric import get_mongo_collection
 
 
 def get_mongo_data():
@@ -83,7 +83,7 @@ def load_on_sql(df):
                     );""")
 
     # insert query
-    query = f'INSERT INTO population({columns}) VALUES(%s,%s,%s,%s,%s,%s)'
+    query = f'INSERT INTO population({columns}) VALUES(%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING'  # 중복 데이터가 충돌할 경우 아무것도 안함
 
     # INSERT DATA
     try:
@@ -103,7 +103,7 @@ def load_on_sql(df):
         print("Done!!")
 
 
-def update_sql():
+def update_sql():  # 추후 개발
     """
     MongoDB에서 축적된 데이터를 1시간에 한 번 씩 업데이트 한다.
     파이썬 파일로 로그를 추가하여 그 이후 데이터에 대해서만 SQL에 적재한다.

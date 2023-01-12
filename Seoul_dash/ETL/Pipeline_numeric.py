@@ -1,5 +1,5 @@
 # 설계 : 하루에 한 번 이 api에서 전일 유동인구 정보를 자동으로 가져와 DB에 적재하도록 한다.
-# 이 파일은 API에서 원본 데이터를 추출하여 MongoDB에 적재까지만 한다.
+# 이 파일은 API에서 원본 데이터를 추출하여 MongoDB에 적재한다.
 import requests
 import json
 from pymongo import MongoClient
@@ -21,7 +21,7 @@ def get_data(page):
     :return:
     field가 딕셔너리로 구성된 row를 리스트 형식으로 반환
     """
-    START_INDEX = (page+1) * 1000  # 데이터 행 시작 번호
+    START_INDEX = (page * 1000) - 999  # 데이터 행 시작 번호 # page는 1보다 작을 수 없다.
     END_INDEX = START_INDEX + 999  # 데이터 행 끝 번호
 
     API = f'http://openapi.seoul.go.kr:8088/{config.KEY}/json/IotVdata018/{START_INDEX}/{END_INDEX}/'
