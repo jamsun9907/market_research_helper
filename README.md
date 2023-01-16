@@ -1,4 +1,6 @@
 # market_research_helper
+## 프로젝트 보고서
+[노션을 참고해주세요](https://sun-0j.notion.site/61a8077a5c5847818cc5f4e11800e22d)
 
 ## 실제 웹 동작 화면
 - 배포까지는 이루어지지 않아 동영상으로 대채합니다.
